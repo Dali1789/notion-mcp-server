@@ -1,6 +1,17 @@
-services:
-  notion-mcp-server:
-    build: .
-    stdin_open: true
-    tty: true
-    restart: unless-stopped
+{
+  "mcpServers": {
+    "notionApi": {
+      "command": "docker",
+      "args": [
+        "run",
+        "--rm",
+        "-i",
+        "-e", "OPENAPI_MCP_HEADERS",
+        "mcp/notion"
+      ],
+      "env": {
+        "OPENAPI_MCP_HEADERS": "{\"Authorization\":\"Bearer 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\",\"Notion-Version\":\"2022-06-28\"}"
+      }
+    }
+  }
+}
