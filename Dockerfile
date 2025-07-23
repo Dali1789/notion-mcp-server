@@ -4,12 +4,6 @@ FROM node:18-alpine
 # Install git and build dependencies
 RUN apk add --no-cache git python3 make g++
 
-# Use Node.js LTS
-FROM node:18-alpine
-
-# Install git and build dependencies
-RUN apk add --no-cache git python3 make g++
-
 # Clone the official notion-mcp-server
 WORKDIR /app
 RUN git clone https://github.com/makenotion/notion-mcp-server.git .
@@ -30,31 +24,22 @@ app.get("/", (req, res) => res.json({status: "ok", service: "notion-mcp"})); \
 app.post("/mcp", async (req, res) => { \
   console.log("MCP request received:", req.body); \
   try { \
-    const mcpProcess = spawn("node", ["dist/index.js"], { \
+    const mcpProcess = spawn("ls", ["-la", "dist/"], { \
       stdio: ["pipe", "pipe", "pipe"], \
       env: { ...process.env, INTERNAL_INTEGRATION_TOKEN: process.env.NOTION_API_TOKEN } \
     }); \
-    mcpProcess.stdin.write(JSON.stringify(req.body) + "\\n"); \
     mcpProcess.stdin.end(); \
     let output = ""; \
     mcpProcess.stdout.on("data", (data) => { \
-      console.log("MCP stdout:", data.toString()); \
+      console.log("Directory listing:", data.toString()); \
       output += data.toString(); \
     }); \
     mcpProcess.stderr.on("data", (data) => { \
-      console.log("MCP stderr:", data.toString()); \
+      console.log("Listing stderr:", data.toString()); \
     }); \
     mcpProcess.on("close", (code) => { \
-      console.log("MCP process closed with code:", code); \
-      if (output) { \
-        try { \
-          res.json(JSON.parse(output)); \
-        } catch (e) { \
-          res.status(500).json({ error: "Invalid JSON: " + output }); \
-        } \
-      } else { \
-        res.status(500).json({ error: "No output from MCP server" }); \
-      } \
+      console.log("Listing process closed with code:", code); \
+      res.json({ dist_contents: output }); \
     }); \
   } catch (error) { \
     res.status(500).json({ error: error.message }); \
