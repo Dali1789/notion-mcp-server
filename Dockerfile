@@ -15,43 +15,34 @@ RUN npm run build
 # Install express for HTTP wrapper
 RUN npm install express
 
-# Create the HTTP wrapper as .cjs file
-RUN echo 'const express = require("express"); \
-const { spawn } = require("child_process"); \
-const app = express(); \
-app.use(express.json()); \
-app.get("/", (req, res) => res.json({status: "ok", service: "notion-mcp"})); \
-app.post("/mcp", async (req, res) => { \
-  console.log("MCP request received:", req.body); \
-  try { \
-    const mcpProcess = spawn("node", ["build/src/init-server.js"], { \
-      stdio: ["pipe", "pipe", "pipe"], \
-      env: { ...process.env, INTERNAL_INTEGRATION_TOKEN: process.env.NOTION_API_TOKEN } \
-    }); \
-    mcpProcess.stdin.end(); \
-    let output = ""; \
-    mcpProcess.stdout.on("data", (data) => { \
-      console.log("Directory listing:", data.toString()); \
-      output += data.toString(); \
-    }); \
-    mcpProcess.stderr.on("data", (data) => { \
-      console.log("Listing stderr:", data.toString()); \
-    }); \
-    mcpProcess.on("close", (code) => { \
-      console.log("Listing process closed with code:", code); \
-      res.json({ build_contents: output }); \
-    }); \
-  } catch (error) { \
-    res.status(500).json({ error: error.message }); \
-  } \
-}); \
-app.listen(3000, () => console.log("HTTP server running on port 3000"));' > server.cjs
-
 # Set environment
 ENV NOTION_API_TOKEN=""
 
 # Expose port
 EXPOSE 3000
 
-# Start the HTTP wrapper
-CMD ["node", "server.cjs"]
+# Create simple server
+RUN echo 'const express = require("express"); \
+const { spawn } = require("child_process"); \
+const app = express(); \
+app.use(express.json()); \
+app.get("/", (req, res) => res.json({status: "ok"})); \
+app.post("/mcp", (req, res) => { \
+  console.log("Request:", req.body); \
+  const proc = spawn("node", ["build/src/init-server.js"], { \
+    stdio: ["pipe", "pipe", "pipe"], \
+    env: {...process.env, INTERNAL_INTEGRATION_TOKEN: process.env.NOTION_API_TOKEN} \
+  }); \
+  proc.stdin.write(JSON.stringify(req.body) + "\\n"); \
+  proc.stdin.end(); \
+  let out = ""; \
+  proc.stdout.on("data", d => out += d); \
+  proc.on("close", () => { \
+    if(out) res.json(JSON.parse(out)); \
+    else res.json({error: "no output"}); \
+  }); \
+}); \
+app.listen(3000);' > server.js
+
+# Start server
+CMD ["node", "server.js"]
