@@ -24,7 +24,7 @@ app.get("/", (req, res) => res.json({status: "ok", service: "notion-mcp"})); \
 app.post("/mcp", async (req, res) => { \
   console.log("MCP request received:", req.body); \
   try { \
-    const mcpProcess = spawn("ls", ["-la", "dist/"], { \
+    const mcpProcess = spawn("find", [".", "-name", "*.js", "-o", "-name", "*.mjs"], { \
       stdio: ["pipe", "pipe", "pipe"], \
       env: { ...process.env, INTERNAL_INTEGRATION_TOKEN: process.env.NOTION_API_TOKEN } \
     }); \
@@ -39,7 +39,7 @@ app.post("/mcp", async (req, res) => { \
     }); \
     mcpProcess.on("close", (code) => { \
       console.log("Listing process closed with code:", code); \
-      res.json({ dist_contents: output }); \
+      res.json({ js_files: output }); \
     }); \
   } catch (error) { \
     res.status(500).json({ error: error.message }); \
