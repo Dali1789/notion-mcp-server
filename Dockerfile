@@ -23,8 +23,9 @@ RUN npm link
 # Minimal image for runtime
 FROM node:18-alpine
 
-# Install express for HTTP server
-RUN npm install -g express
+# Create app directory and install express
+WORKDIR /app
+RUN npm init -y && npm install express
 
 # Copy built package from builder stage
 COPY scripts/notion-openapi.json /usr/local/scripts/
