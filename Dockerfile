@@ -32,4 +32,4 @@ COPY --from=builder /usr/local/bin/notion-mcp-server /usr/local/bin/notion-mcp-s
 ENV OPENAPI_MCP_HEADERS="{}"
 
 # Set entrypoint
-ENTRYPOINT ["notion-mcp-server"]
+CMD ["tail", "-f", "/dev/null"]
