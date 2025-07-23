@@ -37,4 +37,4 @@ ENV OPENAPI_MCP_HEADERS="{}"
 
 # Set HTTP server
 EXPOSE 3000
-CMD ["node", "-e", "const express = require('express'); const app = express(); app.get('/', (req, res) => res.json({status: 'ok', service: 'notion-mcp'})); app.listen(3000, () => console.log('HTTP server running on port 3000'));"]
+CMD ["node", "-e", "const express = require('express'); const { spawn } = require('child_process'); const app = express(); app.use(express.json()); app.get('/', (req, res) => res.json({status: 'ok', service: 'notion-mcp'})); app.post('/mcp', async (req, res) => { try { const mcpProcess = spawn('notion-mcp-server', [], { stdio: ['pipe', 'pipe', 'pipe'] }); mcpProcess.stdin.write(JSON.stringify(req.body) + '\\n'); mcpProcess.stdin.end(); let output = ''; mcpProcess.stdout.on('data', (data) => { output += data.toString(); }); mcpProcess.on('close', () => { try { res.json(JSON.parse(output)); } catch (e) { res.status(500).json({ error: 'Invalid JSON response' }); } }); } catch (error) { res.status(500).json({ error: error.message }); } }); app.listen(3000, () => console.log('HTTP server running on port 3000'));"]
