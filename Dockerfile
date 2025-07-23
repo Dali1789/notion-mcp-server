@@ -42,7 +42,7 @@ app.post("/mcp", (req, res) => { \
     else res.json({error: "no output"}); \
   }); \
 }); \
-app.listen(3000);' > server.js
+app.listen(3000);' > server.cjs
 
 # Start server
-CMD ["node", "server.js"]
+CMD ["node", "server.cjs"]
