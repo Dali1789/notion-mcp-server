@@ -32,4 +32,5 @@ COPY --from=builder /usr/local/bin/notion-mcp-server /usr/local/bin/notion-mcp-s
 ENV OPENAPI_MCP_HEADERS="{}"
 
 # Set entrypoint
-CMD ["tail", "-f", "/dev/null"]
+EXPOSE 3000
+CMD ["node", "-e", "const express = require('express'); const app = express(); app.get('/', (req, res) => res.json({status: 'ok', service: 'notion-mcp'})); app.listen(3000, () => console.log('HTTP server running on port 3000'));"]
