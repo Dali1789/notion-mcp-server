@@ -12,6 +12,9 @@ RUN git clone https://github.com/makenotion/notion-mcp-server.git .
 RUN npm install
 RUN npm run build
 
+# Check what was actually built
+RUN echo "=== BUILD CONTENTS ===" && find build -name "*.js" -type f
+
 # Install express for HTTP wrapper
 RUN npm install express
 
@@ -21,7 +24,7 @@ ENV NOTION_API_TOKEN=""
 # Expose port
 EXPOSE 3000
 
-# Create simple server
+# Create simple server that shows what files exist
 RUN echo 'const express = require("express"); \
 const { spawn } = require("child_process"); \
 const app = express(); \
@@ -29,32 +32,13 @@ app.use(express.json()); \
 app.get("/", (req, res) => res.json({status: "ok"})); \
 app.post("/mcp", (req, res) => { \
   console.log("Request:", req.body); \
-  const proc = spawn("node", ["build/src/init-server.js"], { \
-    stdio: ["pipe", "pipe", "pipe"], \
-    env: {...process.env, INTERNAL_INTEGRATION_TOKEN: process.env.NOTION_API_TOKEN} \
-  }); \
-  proc.stdin.write(JSON.stringify(req.body) + "\\n"); \
-  proc.stdin.end(); \
-  let out = ""; \
-  let err = ""; \
-  proc.stdout.on("data", d => { \
-    console.log("MCP stdout:", d.toString()); \
-    out += d; \
-  }); \
-  proc.stderr.on("data", d => { \
-    console.log("MCP stderr:", d.toString()); \
-    err += d; \
-  }); \
-  proc.on("close", code => { \
-    console.log("MCP closed with code:", code); \
-    console.log("Output length:", out.length); \
-    console.log("Error length:", err.length); \
-    if(out) { \
-      try { res.json(JSON.parse(out)); } \
-      catch(e) { res.json({raw: out}); } \
-    } else { \
-      res.json({error: "no output", stderr: err, code: code}); \
-    } \
+  // First show what files exist \
+  const listProc = spawn("find", ["build", "-name", "*.js"], {stdio: ["pipe", "pipe", "pipe"]}); \
+  let files = ""; \
+  listProc.stdout.on("data", d => files += d); \
+  listProc.on("close", () => { \
+    console.log("Available files:", files); \
+    res.json({available_files: files.split("\\n").filter(f => f)}); \
   }); \
 }); \
 app.listen(3000, () => console.log("Server running"));' > server.cjs
