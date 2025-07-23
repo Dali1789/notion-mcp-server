@@ -36,7 +36,7 @@ app.get("/", (req, res) => res.json({status: "ok"}));
 app.post("/mcp", (req, res) => {
   console.log("Request:", req.body);
   
-  const proc = spawn("node", ["build/src/init-server.js"], {
+  const proc = spawn("node", ["build/src/openapi-mcp-server/index.js"], {
     stdio: ["pipe", "pipe", "pipe"],
     env: {...process.env, INTERNAL_INTEGRATION_TOKEN: process.env.NOTION_API_TOKEN}
   });
