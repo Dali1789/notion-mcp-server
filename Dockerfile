@@ -24,7 +24,7 @@ app.get("/", (req, res) => res.json({status: "ok", service: "notion-mcp"})); \
 app.post("/mcp", async (req, res) => { \
   console.log("MCP request received:", req.body); \
   try { \
-    const mcpProcess = spawn("node", ["bin/cli.mjs"], { \
+    const mcpProcess = spawn("node", ["bin/cli.mjs", "--help"], { \
       stdio: ["pipe", "pipe", "pipe"], \
       env: { ...process.env, INTERNAL_INTEGRATION_TOKEN: process.env.NOTION_API_TOKEN } \
     }); \
