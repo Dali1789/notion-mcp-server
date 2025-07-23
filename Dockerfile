@@ -4,6 +4,12 @@ FROM node:18-alpine
 # Install git and build dependencies
 RUN apk add --no-cache git python3 make g++
 
+# Use Node.js LTS
+FROM node:18-alpine
+
+# Install git and build dependencies
+RUN apk add --no-cache git python3 make g++
+
 # Clone the official notion-mcp-server
 WORKDIR /app
 RUN git clone https://github.com/makenotion/notion-mcp-server.git .
@@ -15,7 +21,7 @@ RUN npm run build
 # Install express for HTTP wrapper
 RUN npm install express
 
-# Create the HTTP wrapper
+# Create the HTTP wrapper as .cjs file
 RUN echo 'const express = require("express"); \
 const { spawn } = require("child_process"); \
 const app = express(); \
@@ -54,7 +60,7 @@ app.post("/mcp", async (req, res) => { \
     res.status(500).json({ error: error.message }); \
   } \
 }); \
-app.listen(3000, () => console.log("HTTP server running on port 3000"));' > server.js
+app.listen(3000, () => console.log("HTTP server running on port 3000"));' > server.cjs
 
 # Set environment
 ENV NOTION_API_TOKEN=""
@@ -63,4 +69,4 @@ ENV NOTION_API_TOKEN=""
 EXPOSE 3000
 
 # Start the HTTP wrapper
-CMD ["node", "server.js"]
+CMD ["node", "server.cjs"]
