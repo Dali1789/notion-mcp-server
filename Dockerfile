@@ -36,13 +36,28 @@ app.post("/mcp", (req, res) => { \
   proc.stdin.write(JSON.stringify(req.body) + "\\n"); \
   proc.stdin.end(); \
   let out = ""; \
-  proc.stdout.on("data", d => out += d); \
-  proc.on("close", () => { \
-    if(out) res.json(JSON.parse(out)); \
-    else res.json({error: "no output"}); \
+  let err = ""; \
+  proc.stdout.on("data", d => { \
+    console.log("MCP stdout:", d.toString()); \
+    out += d; \
+  }); \
+  proc.stderr.on("data", d => { \
+    console.log("MCP stderr:", d.toString()); \
+    err += d; \
+  }); \
+  proc.on("close", code => { \
+    console.log("MCP closed with code:", code); \
+    console.log("Output length:", out.length); \
+    console.log("Error length:", err.length); \
+    if(out) { \
+      try { res.json(JSON.parse(out)); } \
+      catch(e) { res.json({raw: out}); } \
+    } else { \
+      res.json({error: "no output", stderr: err, code: code}); \
+    } \
   }); \
 }); \
-app.listen(3000);' > server.cjs
+app.listen(3000, () => console.log("Server running"));' > server.cjs
 
 # Start server
 CMD ["node", "server.cjs"]
